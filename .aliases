@@ -1,0 +1,73 @@
+#
+# Quick Folder Access Aliases
+#
+
+
+# ---------------------------------------------------------------------
+# OneDrive folders
+add_alias od 'cd ~/OneDrive\ -\ TAFE'
+# If you have a folder 2024 on OneDrive...
+add_alias od24 'cd ~/OneDrive\ -\ TAFE/2024'
+add_alias od25 'cd ~/OneDrive\ -\ TAFE/2025'
+
+# ---------------------------------------------------------------------
+# Laragon
+add_alias laragon 'cd /c/ProgramData/Laragon/'
+# On OWN machine, or in Room 306
+add_alias laragon 'cd /c/Laragon'
+
+# ---------------------------------------------------------------------
+# Bash utils
+add_alias cls 'clear'
+add_alias countFiles 'la -1 | wc -l'
+
+# ---------------------------------------------------------------------
+# Alias management
+add_alias alias-update 'source ~/.bashrc'
+add_alias alias-edit 'nano ~/.aliases'
+# Use these lines instead of the two above when in room 306
+add_alias alias-update 'source /c/Users/$USERNAME/.bashrc'
+add_alias alias-edit 'nano /c/Users/$USERNAME/.aliases'
+
+# ---------------------------------------------------------------------
+add_alias aliases 'alias | less'
+
+# ---------------------------------------------------------------------
+# Development Utilities
+add_alias mp2525 'mailpit --smtp 0.0.0.0:2525'
+
+add_alias emqx-start 'cd /c/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'
+add_alias emqx-stop 'cd /c/Laragon/bin/mqtt/emqx/bin && emqx stop'
+add_alias emqx-start 'cd /c/ProgramData/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'
+add_alias emqx-stop 'cd /c/ProgramData/Laragon/bin/mqtt/emqx/bin && emqx stop'
+
+add_alias moz-start 'cd /c/Laragon/bin/mqtt/mosquitto && ./mosquitto.exe -c mosquitto.conf -v'
+add_alias moz-start 'cd /c/ProgramData/Laragon/bin/mqtt/mosquitto && ./mosquitto.exe -c mosquitto.conf -v'
+
+# ---------------------------------------------------------------------
+# Laravel Utilities
+add_alias --force artisan 'php artisan'
+
+add_alias fresh 'artisan migrate:fresh --seed'
+add_alias makeall 'artisan make:model -arcs'
+add_alias makeapi 'artisan make:model -acs --api'
+
+add_alias --force pest './vendor/bin/pest'
+add_alias --force test 'artisan test'
+
+# ---------------------------------------------------------------------
+# Python Utilities
+add_alias --force activate 'source .venv/Scripts/activate'
+add_alias venv 'python -v venv .venv'
+add_alias reqs 'python -m pip install -r requirements.txt'
+
+# ---------------------------------------------------------------------
+# General Use Utilities
+add_alias pico 'nano'
+
+# ---------------------------------------------------------------------
+# NodeJS Utilities
+add_alias --force tailwind './node_modules/.bin/tailwindcss'
+
+
+
