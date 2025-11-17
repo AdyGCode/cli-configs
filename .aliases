@@ -60,6 +60,9 @@ add_alias --force test 'artisan test'
 add_alias --force activate 'source .venv/Scripts/activate'
 add_alias venv 'python -v venv .venv'
 add_alias reqs 'python -m pip install -r requirements.txt'
+add_alias vac 'venv && activate'
+add_alias vacr 'vac && reqs'
+
 
 # ---------------------------------------------------------------------
 # General Use Utilities

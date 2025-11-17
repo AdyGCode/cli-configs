@@ -174,6 +174,153 @@ pathtree() {
   done
 }
 
+# ---------------------------------------------------------------------
+# Locate latest version of Python and add to path
+
+find_latest_python() {
+    local META_FILE="$HOME/.python_version"
+    local SEARCH_DIRS=("/c/Program Files" "/c/Program Files (x86)" "/c/Laragon/bin")
+    local FORCE=false
+    local SHOW=false
+    local PERSIST=false
+    local REMOVE=false
+
+    # Parse flags
+    for arg in "$@"; do
+        case "$arg" in
+            --force) FORCE=true ;;
+            --show) SHOW=true ;;
+            --set-persistent) PERSIST=true ;;
+            --remove-persistent) REMOVE=true ;;
+            --help)
+                echo "Usage: find_latest_python [options]"
+                echo "Options:"
+                echo "  --force            Force rescan even if cached this month"
+                echo "  --show             Show all detected Python versions and paths"
+                echo "  --set-persistent   Add or update latest Python path in ~/.bashrc"
+                echo "  --remove-persistent Remove any Python PATH entry from ~/.bashrc"
+                echo "  --help             Show this help message"
+                return 0
+                ;;
+        esac
+    done
+
+    # Handle remove persistent
+    if [ "$REMOVE" = true ]; then
+        _remove_bashrc
+        return 0
+    fi
+
+    local TODAY=$(date +%Y-%m)
+    local LAST_SCAN=""
+    local LAST_VERSION=""
+    local LAST_PATH=""
+
+    if [ -f "$META_FILE" ]; then
+        LAST_SCAN=$(awk -F= '/last_scan/{print $2}' "$META_FILE")
+        LAST_VERSION=$(awk -F= '/version/{print $2}' "$META_FILE")
+        LAST_PATH=$(awk -F= '/path/{print $2}' "$META_FILE")
+    fi
+
+    # Skip scan if same month and not forced
+    if [ "$FORCE" = false ] && [ "$LAST_SCAN" == "$TODAY" ] && [ -n "$LAST_VERSION" ]; then
+        echo "ℹ Using cached Python version: $LAST_VERSION"
+        export PATH="$(dirname "$LAST_PATH"):$PATH"
+        echo "Current Python: $(python --version)"
+        if ! python -m pip --version &>/dev/null; then
+            echo "⚠ pip is not installed for this Python."
+        fi
+        if [ "$PERSIST" = true ]; then
+            _update_bashrc "$(dirname "$LAST_PATH")"
+        fi
+        return 0
+    fi
+
+    # Scan for python.exe, ignoring venv folders
+    local PYTHON_PATHS=()
+    for dir in "${SEARCH_DIRS[@]}"; do
+        if [ -d "$dir" ]; then
+            while IFS= read -r path; do
+                PYTHON_PATHS+=("$path")
+            done < <(find "$dir" -type f -iname "python.exe" \
+                     -not -path "*/venv/*" -not -path "*/.venv/*" 2>/dev/null)
+        fi
+    done
+
+    if [ ${#PYTHON_PATHS[@]} -eq 0 ]; then
+        echo "⚠ No Python installation found."
+        return 1
+    fi
+
+    # Map versions to paths
+    declare -A VERSION_MAP
+    for path in "${PYTHON_PATHS[@]}"; do
+        local version=$("$path" --version 2>&1 | awk '{print $2}')
+        VERSION_MAP["$version"]="$path"
+    done
+
+    # Show all versions if requested
+    if [ "$SHOW" = true ]; then
+        echo "Detected Python installations:"
+        for v in $(printf "%s\n" "${!VERSION_MAP[@]}" | sort -V); do
+            echo "  $v -> ${VERSION_MAP[$v]}"
+        done
+    fi
+
+    # Sort versions and pick latest
+    local LATEST_VERSION=$(printf "%s\n" "${!VERSION_MAP[@]}" | sort -V | tail -n 1)
+    local LATEST_PATH="${VERSION_MAP[$LATEST_VERSION]}"
+    local PYTHON_DIR=$(dirname "$LATEST_PATH")
+
+    # Update PATH
+    export PATH="$PYTHON_DIR:$PATH"
+    echo "✅ Added Python $LATEST_VERSION from $PYTHON_DIR to PATH."
+    echo "Current Python: $(python --version)"
+
+    # Check pip
+    if ! python -m pip --version &>/dev/null; then
+        echo "⚠ pip is not installed for this Python."
+    else
+        echo "✔ pip is available."
+    fi
+
+    # Save metadata
+    cat > "$META_FILE" <<EOF
+last_scan=$TODAY
+version=$LATEST_VERSION
+path=$LATEST_PATH
+EOF
+
+    # Persist if requested
+    if [ "$PERSIST" = true ]; then
+        _update_bashrc "$PYTHON_DIR"
+    fi
+}
+
+# Helper: Update ~/.bashrc with latest Python path
+_update_bashrc() {
+    local PYTHON_DIR="$1"
+    local BASHRC="$HOME/.bashrc"
+    if grep -q "export PATH=.*python" "$BASHRC"; then
+        sed -i "s|export PATH=.*python.*|export PATH=\"$PYTHON_DIR:\$PATH\"|" "$BASHRC"
+        echo "✔ Updated Python path in $BASHRC"
+    else
+        echo "export PATH=\"$PYTHON_DIR:\$PATH\"" >> "$BASHRC"
+        echo "✔ Added Python path to $BASHRC"
+    fi
+}
+
+# Helper: Remove Python PATH from ~/.bashrc
+_remove_bashrc() {
+    local BASHRC="$HOME/.bashrc"
+    if grep -q "export PATH=.*python" "$BASHRC"; then
+        sed -i "/export PATH=.*python.*/d" "$BASHRC"
+        echo "✔ Removed Python path from $BASHRC"
+    else
+        echo "ℹ No Python path entry found in $BASHRC"
+    fi
+}
+
 
 
 # =====================================================================
@@ -211,7 +358,10 @@ add_to_path "/c/Laragon/usr/bin"
 add_to_path "/c/Laragon/bin/mqtt/emqx/bin"
 add_to_path "/c/Laragon/bin/utils"
 add_to_path "/c/Laragon/bin/mqtt/mosquitto"
-add_to_path "/c/Laragon/bin/marp"
+
+
+# =====================================================================
+find_latest_python
 
 # =====================================================================
 # Source aliases if available
