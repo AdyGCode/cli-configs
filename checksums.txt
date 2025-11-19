@@ -1,0 +1,2 @@
+c4fef4672d436a06c9e35a0fdfe5514aef60cb5f9e37e88b0453d304e6e2ecab */c/Users/5001775/Source/Repos/cli-configs/.aliases
+6374e5bf8d6d0500cb66cea276bb525c2db2a099c2cd0078590814b0690a1078 */c/Users/5001775/Source/Repos/cli-configs/.bashrc

@@ -185,6 +185,7 @@ find_latest_python() {
     local PERSIST=false
     local REMOVE=false
 
+    echo "Searching for Python, and checking for latest version"
     # Parse flags
     for arg in "$@"; do
         case "$arg" in
