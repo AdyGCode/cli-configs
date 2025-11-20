@@ -1,0 +1,35 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="aiohappyeyeballs" />
+          <option value="aiohttp" />
+          <option value="aiosignal" />
+          <option value="alembic" />
+          <option value="APScheduler" />
+          <option value="async-timeout" />
+          <option value="attrs" />
+          <option value="bcrypt" />
+          <option value="exceptiongroup" />
+          <option value="frozenlist" />
+          <option value="loguru" />
+          <option value="Mako" />
+          <option value="multidict" />
+          <option value="passlib" />
+          <option value="permit" />
+          <option value="propcache" />
+          <option value="psycopg2-binary" />
+          <option value="PyJWT" />
+          <option value="PyMySQL" />
+          <option value="tzdata" />
+          <option value="tzlocal" />
+          <option value="win32_setctime" />
+          <option value="yarl" />
+          <option value="zipp" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

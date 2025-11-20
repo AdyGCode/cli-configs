@@ -24,15 +24,50 @@ alias ll='ls -lah'
 alias ls='ls -F --color=auto --show-control-chars'
 
 
-
-
 # =====================================================================
 # Function definitions used by shell
 
 # ---------------------------------------------------------------------
 # Function to safely append to PATH
 add_to_path() {
-  [ -d "$1" ] && PATH="$1:$PATH"
+  local force=0
+  local show_help=0
+  local path=""
+
+  for arg in "$@"; do
+    case "$arg" in
+      --force)
+        force=1
+        ;;
+      --help|-h)
+        show_help=1
+        ;;
+      *)
+        path="$arg"
+        ;;
+    esac
+  done
+
+  if [ "$show_help" -eq 1 ] || [ -z "$path" ]; then
+    echo "Usage: add_to_path [--force] <path>"
+    echo ""
+    echo "Adds <path> to the PATH environment variable."
+    echo ""
+    echo "Options:"
+    echo "  --force     Add the path even if it does not exist."
+    echo "  --help, -h  Show this help message."
+    echo ""
+    echo "Examples:"
+    echo "  add_to_path ./vendor/bin"
+    echo "  add_to_path --force ./vendor/bin"
+    return 0
+  fi
+
+  if [ "$force" -eq 1 ] || [ -d "$path" ]; then
+    PATH="$path:$PATH"
+  else
+    echo "Warning: '$path' does not exist. Use --force to add it anyway."
+  fi
 }
 
 
@@ -174,6 +209,7 @@ pathtree() {
   done
 }
 
+
 # ---------------------------------------------------------------------
 # Locate latest version of Python and add to path
 
@@ -186,6 +222,7 @@ find_latest_python() {
     local REMOVE=false
 
     echo "Searching for Python, and checking for latest version"
+    echo "First run may take several minutes"
     # Parse flags
     for arg in "$@"; do
         case "$arg" in
@@ -329,9 +366,9 @@ _remove_bashrc() {
 
 # ---------------------------------------------------------------------
 # All Computers
-add_to_path "./vendor/bin"
-add_to_path "./.venv/Scripts"
-add_to_path "./.venv/bin"
+add_to_path --force "./vendor/bin"
+add_to_path --force "./.venv/Scripts"
+add_to_path --force "./.venv/bin"
 add_to_path "$HOME/appdata/roaming/python/python311/site-packages"
 
 # ---------------------------------------------------------------------
@@ -350,19 +387,24 @@ add_to_path "/c/ProgramData/Laragon/bin/marp"
 
 # ---------------------------------------------------------------------
 # TDM and Home Computers
-add_to_path "/c/Laragon/bin/mailpit"
-add_to_path "/c/Laragon/bin/gh/bin"
-add_to_path "/c/Laragon/bin/pie"
-add_to_path "/c/Laragon/bin/mongodb/mongodb-8.0.8/bin"
-add_to_path "/c/Laragon/bin/mongodb/mongodb-shell"
-add_to_path "/c/Laragon/usr/bin"
-add_to_path "/c/Laragon/bin/mqtt/emqx/bin"
-add_to_path "/c/Laragon/bin/utils"
-add_to_path "/c/Laragon/bin/mqtt/mosquitto"
+add_to_path /c/Laragon/bin/mailpit
+add_to_path /c/Laragon/bin/gh/bin
+add_to_path /c/Laragon/bin/pie
+add_to_path /c/Laragon/bin/mongodb/mongodb-8.0.8/bin
+add_to_path /c/Laragon/bin/mongodb/mongodb-shell
+add_to_path /c/Laragon/usr/bin
+add_to_path /c/Laragon/bin/mqtt/emqx/bin
+add_to_path /c/Laragon/bin/utils
+add_to_path /c/Laragon/bin/mqtt/mosquitto
+add_to_path /c/Laragon/bin/marp
 
 
 # =====================================================================
 find_latest_python
+
+#
+# Any Windows PC
+add_to_path "/c/Program Files/7-Zip"
 
 # =====================================================================
 # Source aliases if available
