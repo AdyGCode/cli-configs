@@ -160,6 +160,7 @@ add_alias() {
 # Display paths in a folder as a tree
 
 pathtree() {
+  echo ""
   local delimiter=":"
   local show_hidden=false
 
@@ -221,6 +222,7 @@ find_latest_python() {
     local PERSIST=false
     local REMOVE=false
 
+    echo ""
     echo "Searching for Python, and checking for latest version"
     echo "First run may take several minutes"
     # Parse flags
@@ -337,6 +339,7 @@ EOF
 
 # Helper: Update ~/.bashrc with latest Python path
 _update_bashrc() {
+    echo ""
     local PYTHON_DIR="$1"
     local BASHRC="$HOME/.bashrc"
     if grep -q "export PATH=.*python" "$BASHRC"; then
@@ -350,6 +353,7 @@ _update_bashrc() {
 
 # Helper: Remove Python PATH from ~/.bashrc
 _remove_bashrc() {
+    echo ""
     local BASHRC="$HOME/.bashrc"
     if grep -q "export PATH=.*python" "$BASHRC"; then
         sed -i "/export PATH=.*python.*/d" "$BASHRC"
@@ -360,6 +364,9 @@ _remove_bashrc() {
 }
 
 
+echo " "
+echo "------------------------------------------------------------------------"
+echo " "
 
 # =====================================================================
 # Add tools and environments to PATH
@@ -398,14 +405,26 @@ add_to_path /c/Laragon/bin/utils
 add_to_path /c/Laragon/bin/mqtt/mosquitto
 add_to_path /c/Laragon/bin/marp
 
-
-# =====================================================================
-find_latest_python
-
 #
 # Any Windows PC
 add_to_path "/c/Program Files/7-Zip"
 
+
+echo " "
+echo "------------------------------------------------------------------------"
+echo " "
+
+# =====================================================================
+find_latest_python
+
+echo " "
+echo "------------------------------------------------------------------------"
+echo " "
+
 # =====================================================================
 # Source aliases if available
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases"
+
+echo " "
+echo "------------------------------------------------------------------------"
+echo " "
