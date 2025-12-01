@@ -390,6 +390,7 @@ add_to_path "/c/ProgramData/Laragon/bin/mqtt/emqx/bin"
 add_to_path "/c/ProgramData/Laragon/bin/utils"
 add_to_path "/c/ProgramData/Laragon/bin/mqtt/mosquitto"
 add_to_path "/c/ProgramData/Laragon/bin/marp"
+add_to_path "/c/ProgramData/Laragon/bin/nanomq/bin"
 
 
 # ---------------------------------------------------------------------
@@ -404,6 +405,8 @@ add_to_path /c/Laragon/bin/mqtt/emqx/bin
 add_to_path /c/Laragon/bin/utils
 add_to_path /c/Laragon/bin/mqtt/mosquitto
 add_to_path /c/Laragon/bin/marp
+add_to_path /c/Laragon/bin/nanomq/bin
+add_to_path "/c/Program\ Files/Erlang\ OTP/bin/"
 
 #
 # Any Windows PC
