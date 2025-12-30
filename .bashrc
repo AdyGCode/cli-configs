@@ -1,3 +1,4 @@
+export CLI_OUTPUT=none
 
 # =====================================================================
 # Output filtering via $CLI_OUTPUT (case-insensitive)
