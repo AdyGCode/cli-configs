@@ -1,22 +1,91 @@
-export CLI_OUTPUT=NONE
 
 # =====================================================================
-# Output filtering (SUCCESS | ERROR | NONE | ALL[default]) via $CLI_OUTPUT
-# Case-insensitive; unset/unknown values => ALL
+# Output filtering via $CLI_OUTPUT (case-insensitive)
+# Categories: success | warning | error | info
+# Presets: ALL (default) | NONE
+#
+# Examples:
+#   export CLI_OUTPUT=warning|success
+#   export CLI_OUTPUT="ERROR, SUCCESS"
+#   export CLI_OUTPUT="success error"     # space-separated
+#   export CLI_OUTPUT=NONE                # only final completed message
+#   export CLI_OUTPUT=ALL                 # show everything
+
 __cli_out_raw="${CLI_OUTPUT:-}"
-__cli_out="$(printf '%s' "$__cli_out_raw" | tr '[:upper:]' '[:lower:]')"
-case "$__cli_out" in
-  success|error|none|warning) ;;        # accepted as-is
-  *) __cli_out="all" ;;          # default
-esac
+__cli_out_norm="$(printf '%s' "$__cli_out_raw" | tr '[:upper:]' '[:lower:]')"
+
+# Split by | , or whitespace into an array of tokens
+# Shell-safe tokenizer: translate separators to spaces, then read into array.
+__cli_tokens=()
+if [ -n "$__cli_out_norm" ]; then
+  __cli_out_seps="$(printf '%s' "$__cli_out_norm" | tr ',|' '  ' )"
+  # trim extra spaces
+  # shellcheck disable=SC2086
+  set -- $__cli_out_seps
+  for t in "$@"; do
+    [ -n "$t" ] && __cli_tokens+=("$t")
+  done
+fi
+
+# Resolve preset logic:
+__cli_preset="all"
+for t in "${__cli_tokens[@]}"; do
+  case "$t" in
+    none) __cli_preset="none" ;;
+    all)  __cli_preset="all"  ;;
+  esac
+done
+
+# Build an allow-list set only when not NONE
+# We use a simple "contains" function against a normalized list
+__cli_allow_list=""
+if [ "$__cli_preset" = "none" ]; then
+  __cli_allow_list=""         # nothing allowed
+else
+  # If tokens include specific categories, use them; otherwise ALL
+  __has_specific=0
+  for t in "${__cli_tokens[@]}"; do
+    case "$t" in
+      success|warning|error|info)
+        __has_specific=1
+        # de-duplicate
+        case "$__cli_allow_list" in
+          *" $t "* ) ;;                     # already present
+          * ) __cli_allow_list="$__cli_allow_list $t " ;;
+        esac
+        ;;
+    esac
+  done
+
+  if [ "$__has_specific" -eq 0 ]; then
+    # No specific categories found → ALL
+    __cli_allow_list=" success warning error info "
+  fi
+fi
+
+# Predicate: is a category enabled?
+cli_enabled() {
+  # $1: category name (success|warning|error|info)
+  case "$__cli_preset" in
+    none) return 1 ;;       # nothing allowed
+    all)  return 0 ;;       # everything allowed
+    *)
+      case "$__cli_allow_list" in
+        *" $1 "* ) return 0 ;;
+        * ) return 1 ;;
+      esac
+      ;;
+  esac
+}
 
 # Log helpers: route messages through these instead of echo
-cli_success()  { [ "$__cli_out" = "success" ] || [ "$__cli_out" = "all" ] && printf '✅ %b\n' "$*"; }
-cli_warning()  { [ "$__cli_out" = "warning" ]   || [ "$__cli_out" = "all" ] && printf '⚠️ %b\n' "$*" >&2; }
-cli_error()    { [ "$__cli_out" = "error" ]   || [ "$__cli_out" = "all" ] && printf '🛑 %b\n' "$*" >&2; }
-cli_info()     { [ "$__cli_out" = "none" ]    || [ "$__cli_out" = "all" ] && printf 'ℹ️  %b\n' "$*"; }
+# (Keep icons; warnings/errors go to stderr.)
+cli_success()  { cli_enabled success && printf '✅ %b\n' "$*"; }
+cli_warning()  { cli_enabled warning && printf '⚠️ %b\n' "$*" >&2; }
+cli_error()    { cli_enabled error   && printf '🛑 %b\n' "$*" >&2; }
+cli_info()     { cli_enabled info    && printf 'ℹ️  %b\n' "$*"; }
 cli_blank()    { printf '%b\n' "$*"; }
-cli_completed(){ printf '%s\n' "BashRC executed and Aliases added"; }  # always print exactly once at the end
+cli_completed(){ printf '%s\n' "BashRC executed and Aliases added"; }  # single final line
 
 # =====================================================================
 # Greetings
