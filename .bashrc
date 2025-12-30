@@ -88,26 +88,6 @@ cli_info()     { cli_enabled info    && printf 'ℹ️  %b\n' "$*"; }
 cli_blank()    { printf '%b\n' "$*"; }
 cli_completed(){ printf '%s\n' "BashRC executed and Aliases added"; }  # single final line
 
-# =====================================================================
-# Greetings
-
-# ---------------------------------------------------------------------
-# Time-based greeting
-cli_blank " "
-HOUR=$(date "+%H")
-case $HOUR in
-  [0-9]|1[0-1]) cli_info "Good morning" ;;
-  1[2-7])       cli_info "Good afternoon" ;;
-  *)            cli_info "Good evening" ;;
-esac
-
-
-# ---------------------------------------------------------------------
-# Welcome message
-cli_info "Welcome ${USER:-$USERNAME}, to Bash on $HOSTNAME."
-cli_info "Today's date is: $(date +"%A, %d-%m-%Y")"
-cli_blank " "
-
 
 # =====================================================================
 # Add JRE location as environment variable
@@ -141,13 +121,13 @@ add_to_path() {
 
   if [ "$show_help" -eq 1 ] || [ -z "$path" ]; then
     cli_info "Usage: add_to_path [--force] <path>"
-    cli_blank " "
+    cli_info " "
     cli_info "Adds <path> to the PATH environment variable."
-    cli_blank " "
+    cli_info " "
     cli_info "Options:"
     cli_info "  --force  Add the path even if it does not exist."
     cli_info "  --help, -h  Show this help message."
-    cli_blank " "
+    cli_info " "
     cli_info "Examples:"
     cli_info "  add_to_path ./vendor/bin"
     cli_info "  add_to_path --force ./vendor/bin"
@@ -180,11 +160,11 @@ add_alias() {
   # Help option
   if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     cli_info "Usage: add_alias [--force|-f] <alias_name> <alias_command>"
-    cli_blank " "
+    cli_info " "
     cli_info "Options:"
     cli_info "  --force, -f  Force creation of alias even if command or path is invalid"
     cli_info "  --help, -h   Show this help message"
-    cli_blank " "
+    cli_info " "
     cli_info "Examples:"
     cli_info "  add_alias cls 'clear'"
     cli_info "  add_alias laragon 'cd /c/ProgramData/Laragon/'"
@@ -255,7 +235,7 @@ add_alias() {
 # Display paths in a folder as a tree
 
 pathtree() {
-  cli_blank ""
+  cli_blank " "
   local delimiter=":"
   local show_hidden=false
 
@@ -317,9 +297,9 @@ find_latest_python() {
     local PERSIST=false
     local REMOVE=false
 
-    cli_blank " "
+    cli_info " "
     cli_info "Searching for Python, and checking for latest version"
-    cli_blank " "
+    cli_info " "
     cli_info "First run may take several minutes"
     # Parse flags
     for arg in "$@"; do
@@ -435,7 +415,7 @@ EOF
 
 # Helper: Update ~/.bashrc with latest Python path
 _update_bashrc() {
-    cli_blank " "
+    cli_info " "
     local PYTHON_DIR="$1"
     local BASHRC="$HOME/.bashrc"
     if grep -q "export PATH=.*python" "$BASHRC"; then
@@ -449,7 +429,7 @@ _update_bashrc() {
 
 # Helper: Remove Python PATH from ~/.bashrc
 _remove_bashrc() {
-    cli_blank " "
+    cli_info " "
     local BASHRC="$HOME/.bashrc"
     if grep -q "export PATH=.*python" "$BASHRC"; then
         sed -i "/export PATH=.*python.*/d" "$BASHRC"
@@ -509,9 +489,9 @@ add_to_path "/c/Program Files/7-Zip"
 
 
 # =====================================================================
-cli_blank " "
+cli_info " "
 find_latest_python
-cli_blank " "
+cli_info " "
 
 # =====================================================================
 # Source aliases if available
@@ -522,5 +502,27 @@ cli_blank " "
 # End-of-initialization message (single line) and cleanup
 cli_blank " "
 cli_completed
+
+
+# =====================================================================
+# Greetings
+
+# ---------------------------------------------------------------------
+# Time-based greeting
+cli_blank " "
+HOUR=$(date "+%H")
+case $HOUR in
+  [0-9]|1[0-1]) cli_info "Good morning" ;;
+  1[2-7])       cli_info "Good afternoon" ;;
+  *)            cli_info "Good evening" ;;
+esac
+
+
+# ---------------------------------------------------------------------
+# Welcome message
+cli_blank "Welcome ${USER:-$USERNAME}, to Bash on $HOSTNAME."
+cli_blank "Today's date is: $(date +"%A, %d-%m-%Y")"
+cli_blank " "
+
 unset CLI_OUTPUT
 unset __cli_out
