@@ -9,11 +9,13 @@ add_alias od 'cd ~/OneDrive\ -\ TAFE'
 # If you have a folder 2024 on OneDrive...
 add_alias od24 'cd ~/OneDrive\ -\ TAFE/2024'
 add_alias od25 'cd ~/OneDrive\ -\ TAFE/2025'
+add_alias od26 'cd ~/OneDrive\ -\ TAFE/2026'
 
 # ---------------------------------------------------------------------
 # Laragon
+# For TAFE Labs
 add_alias laragon 'cd /c/ProgramData/Laragon/'
-# On OWN machine, or in Room 306
+# On OWN machine, also Room 306 or TDM Labs
 add_alias laragon 'cd /c/Laragon'
 
 # ---------------------------------------------------------------------
@@ -23,11 +25,14 @@ add_alias countFiles 'la -1 | wc -l'
 
 # ---------------------------------------------------------------------
 # Alias management
+# For TAFE Labs
 add_alias alias-update 'source ~/.bashrc'
 add_alias alias-edit 'nano ~/.aliases'
-# Use these lines instead of the two above when in room 306
+# On OWN machine, also Room 306 or TDM Labs
 add_alias alias-update 'source /c/Users/$USERNAME/.bashrc'
 add_alias alias-edit 'nano /c/Users/$USERNAME/.aliases'
+add_alias edit-aliases 'alias-edit'
+add_alias update-aliases 'alias-update'
 
 # ---------------------------------------------------------------------
 add_alias aliases 'alias | less'
@@ -36,23 +41,26 @@ add_alias aliases 'alias | less'
 # Development Utilities
 add_alias mp2525 'mailpit --smtp 0.0.0.0:2525'
 
-add_alias emqx-start 'cd /c/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'
-add_alias emqx-stop 'cd /c/Laragon/bin/mqtt/emqx/bin && emqx stop'
-add_alias emqx-start 'cd /c/ProgramData/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'
-add_alias emqx-stop 'cd /c/ProgramData/Laragon/bin/mqtt/emqx/bin && emqx stop'
+# For TAFE Machines
+add_alias emqx-start 'cd /c/Laragon/bin/emqx/bin && ./emqx foreground'
+add_alias emqx-stop 'cd /c/Laragon/bin/emqx/bin && emqx stop'
+add_alias moz-start 'cd /c/Laragon/bin/mosquitto && ./mosquitto.exe -c mosquitto.conf -v'
 
-add_alias moz-start 'cd /c/Laragon/bin/mqtt/mosquitto && ./mosquitto.exe -c mosquitto.conf -v'
-add_alias moz-start 'cd /c/ProgramData/Laragon/bin/mqtt/mosquitto && ./mosquitto.exe -c mosquitto.conf -v'
+# On OWN machine, also Room 306 or TDM Labs
+add_alias emqx-start 'cd /c/ProgramData/Laragon/bin/emqx/bin && ./emqx foreground'
+add_alias emqx-stop 'cd /c/ProgramData/Laragon/bin/emqx/bin && emqx stop'
+add_alias moz-start 'cd /c/ProgramData/Laragon/bin/mosquitto && ./mosquitto.exe -c mosquitto.conf -v'
 
 # ---------------------------------------------------------------------
 # Laravel Utilities
 add_alias --force artisan 'php artisan'
 
-add_alias fresh 'artisan migrate:fresh --seed'
-add_alias makeall 'artisan make:model -arcs'
-add_alias makeapi 'artisan make:model -acs --api'
-
+add_alias --force tinker 'artisan tinker'
+add_alias --force fresh 'artisan migrate:fresh --seed'
+add_alias --force makeall 'artisan make:model -arcs'
+add_alias --force makeapi 'artisan make:model -acs --api'
 add_alias --force pest './vendor/bin/pest'
+add_alias --force pint './vendor/bin/pint'
 add_alias --force test 'artisan test'
 
 # ---------------------------------------------------------------------

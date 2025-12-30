@@ -1,20 +1,47 @@
+export CLI_OUTPUT=NONE
+
+# =====================================================================
+# Output filtering (SUCCESS | ERROR | NONE | ALL[default]) via $CLI_OUTPUT
+# Case-insensitive; unset/unknown values => ALL
+__cli_out_raw="${CLI_OUTPUT:-}"
+__cli_out="$(printf '%s' "$__cli_out_raw" | tr '[:upper:]' '[:lower:]')"
+case "$__cli_out" in
+  success|error|none|warning) ;;        # accepted as-is
+  *) __cli_out="all" ;;          # default
+esac
+
+# Log helpers: route messages through these instead of echo
+cli_success()  { [ "$__cli_out" = "success" ] || [ "$__cli_out" = "all" ] && printf '✅ %b\n' "$*"; }
+cli_warning()  { [ "$__cli_out" = "warning" ]   || [ "$__cli_out" = "all" ] && printf '⚠️ %b\n' "$*" >&2; }
+cli_error()    { [ "$__cli_out" = "error" ]   || [ "$__cli_out" = "all" ] && printf '🛑 %b\n' "$*" >&2; }
+cli_info()     { [ "$__cli_out" = "none" ]    || [ "$__cli_out" = "all" ] && printf 'ℹ️  %b\n' "$*"; }
+cli_blank()    { printf '%b\n' "$*"; }
+cli_completed(){ printf '%s\n' "BashRC executed and Aliases added"; }  # always print exactly once at the end
+
 # =====================================================================
 # Greetings
 
 # ---------------------------------------------------------------------
 # Time-based greeting
+cli_blank " "
 HOUR=$(date "+%H")
 case $HOUR in
-  [0-9]|1[0-1]) echo "Good morning" ;;
-  1[2-7]) echo "Good afternoon" ;;
-  *) echo "Good evening" ;;
+  [0-9]|1[0-1]) cli_info "Good morning" ;;
+  1[2-7])       cli_info "Good afternoon" ;;
+  *)            cli_info "Good evening" ;;
 esac
+
 
 # ---------------------------------------------------------------------
 # Welcome message
-echo "Welcome ${USER:-$USERNAME}, to Bash on $HOSTNAME."
-echo "Today's date is: $(date +"%A, %d-%m-%Y")"
-echo
+cli_info "Welcome ${USER:-$USERNAME}, to Bash on $HOSTNAME."
+cli_info "Today's date is: $(date +"%A, %d-%m-%Y")"
+cli_blank " "
+
+
+# =====================================================================
+# Add JRE location as environment variable
+export EXE4J_JAVA_HOME="/c/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
 
 
 # =====================================================================
@@ -29,46 +56,42 @@ alias ls='ls -F --color=auto --show-control-chars'
 
 # ---------------------------------------------------------------------
 # Function to safely append to PATH
+
 add_to_path() {
   local force=0
   local show_help=0
   local path=""
-
   for arg in "$@"; do
     case "$arg" in
-      --force)
-        force=1
-        ;;
-      --help|-h)
-        show_help=1
-        ;;
-      *)
-        path="$arg"
-        ;;
+      --force) force=1 ;;
+      --help|-h) show_help=1 ;;
+      *) path="$arg" ;;
     esac
   done
 
   if [ "$show_help" -eq 1 ] || [ -z "$path" ]; then
-    echo "Usage: add_to_path [--force] <path>"
-    echo ""
-    echo "Adds <path> to the PATH environment variable."
-    echo ""
-    echo "Options:"
-    echo "  --force     Add the path even if it does not exist."
-    echo "  --help, -h  Show this help message."
-    echo ""
-    echo "Examples:"
-    echo "  add_to_path ./vendor/bin"
-    echo "  add_to_path --force ./vendor/bin"
+    cli_info "Usage: add_to_path [--force] <path>"
+    cli_blank " "
+    cli_info "Adds <path> to the PATH environment variable."
+    cli_blank " "
+    cli_info "Options:"
+    cli_info "  --force  Add the path even if it does not exist."
+    cli_info "  --help, -h  Show this help message."
+    cli_blank " "
+    cli_info "Examples:"
+    cli_info "  add_to_path ./vendor/bin"
+    cli_info "  add_to_path --force ./vendor/bin"
     return 0
   fi
 
   if [ "$force" -eq 1 ] || [ -d "$path" ]; then
     PATH="$path:$PATH"
+    cli_success "Added '$path' to PATH."
   else
-    echo "Warning: '$path' does not exist. Use --force to add it anyway."
+    cli_warning "Warning: '$path' does not exist. Use --force to add it anyway."
   fi
 }
+
 
 
 # ---------------------------------------------------------------------
@@ -82,19 +105,20 @@ add_to_path() {
 # add_alias emqx-stop 'cd /c/Laragon/bin/mqtt/emqx/bin && emqx stop'
 # add_alias makeapi 'artisan make:model -acs --api'
 
+
 add_alias() {
   # Help option
   if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    echo "Usage: add_alias [--force|-f] <alias_name> <alias_command>"
-    echo ""
-    echo "Options:"
-    echo "  --force, -f     Force creation of alias even if command or path is invalid"
-    echo "  --help, -h      Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  add_alias cls 'clear'"
-    echo "  add_alias laragon 'cd /c/ProgramData/Laragon/'"
-    echo "  add_alias --force emqx-start 'cd /c/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'"
+    cli_info "Usage: add_alias [--force|-f] <alias_name> <alias_command>"
+    cli_blank " "
+    cli_info "Options:"
+    cli_info "  --force, -f  Force creation of alias even if command or path is invalid"
+    cli_info "  --help, -h   Show this help message"
+    cli_blank " "
+    cli_info "Examples:"
+    cli_info "  add_alias cls 'clear'"
+    cli_info "  add_alias laragon 'cd /c/ProgramData/Laragon/'"
+    cli_info "  add_alias --force emqx-start 'cd /c/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'"
     return 0
   fi
 
@@ -118,24 +142,24 @@ add_alias() {
     eval path="$path"
     if [ ! -d "$path" ]; then
       if [ "$force" = false ]; then
-        echo "❌ Directory '$path' does not exist. Alias '$alias_name' not created."
+        cli_error "Directory '$path' does not exist. Alias '$alias_name' not created."
         return 1
       else
-        echo "⚠️ Directory '$path' not found. Alias '$alias_name' forced."
+        cli_warning "Directory '$path' not found. Alias '$alias_name' forced."
       fi
     fi
   fi
 
-  # Check for executable in the command (e.g. './emqx', './mosquitto.exe')
-  if [[ "$alias_command" =~ \&\&[[:space:]]+\.\/([a-zA-Z0-9._-]+) ]]; then
+  # Check for executable in the command (e.g., './emqx', './mosquitto.exe')
+  if [[ "$alias_command" =~ \&\&[[:space:]]+\./([a-zA-Z0-9._-]+) ]]; then
     local exec_file="${BASH_REMATCH[1]}"
     local exec_path="${path}/${exec_file}"
     if [ ! -x "$exec_path" ]; then
       if [ "$force" = false ]; then
-        echo "❌ Executable '$exec_file' not found or not executable at '$exec_path'. Alias '$alias_name' not created."
+        cli_error "Executable '$exec_file' not found or not executable at '$exec_path'. Alias '$alias_name' not created."
         return 1
       else
-        echo "⚠️ Executable '$exec_file' not found. Alias '$alias_name' forced."
+        cli_warning "Executable '$exec_file' not found. Alias '$alias_name' forced."
       fi
     fi
   else
@@ -143,24 +167,25 @@ add_alias() {
     local cmd="${alias_command%% *}"
     if ! command -v "$cmd" &> /dev/null; then
       if [ "$force" = false ]; then
-        echo "❌ Command '$cmd' not found. Alias '$alias_name' not created."
+        cli_error "Command '$cmd' not found. Alias '$alias_name' not created."
         return 1
       else
-        echo "⚠️ Command '$cmd' not found. Alias '$alias_name' forced."
+        cli_warning "Command '$cmd' not found. Alias '$alias_name' forced."
       fi
     fi
   fi
 
   # Create the alias
   alias "$alias_name"="$alias_command"
-  echo "✅ Alias '$alias_name' created for: $alias_command"
+  cli_success "Alias '$alias_name' created for: $alias_command"
 }
+
 
 # ---------------------------------------------------------------------
 # Display paths in a folder as a tree
 
 pathtree() {
-  echo ""
+  cli_blank ""
   local delimiter=":"
   local show_hidden=false
 
@@ -169,7 +194,7 @@ pathtree() {
     case "$1" in
       --show-hidden) show_hidden=true ;;
       --delimiter=*) delimiter="${1#*=}" ;;
-      *) echo "Usage: pathtree [--show-hidden] [--delimiter=CHAR]"; return 1 ;;
+      *) cli_info "Usage: pathtree [--show-hidden] [--delimiter=CHAR]"; return 1 ;;
     esac
     shift
   done
@@ -206,7 +231,7 @@ pathtree() {
     for ((i = 1; i < ${#parts[@]}; i++)); do
       indent+="|   "
     done
-    echo "${indent}+-- ${parts[-1]}"
+    cli_blank "${indent}+-- ${parts[-1]}"
   done
 }
 
@@ -222,9 +247,10 @@ find_latest_python() {
     local PERSIST=false
     local REMOVE=false
 
-    echo ""
-    echo "Searching for Python, and checking for latest version"
-    echo "First run may take several minutes"
+    cli_blank " "
+    cli_info "Searching for Python, and checking for latest version"
+    cli_blank " "
+    cli_info "First run may take several minutes"
     # Parse flags
     for arg in "$@"; do
         case "$arg" in
@@ -233,13 +259,13 @@ find_latest_python() {
             --set-persistent) PERSIST=true ;;
             --remove-persistent) REMOVE=true ;;
             --help)
-                echo "Usage: find_latest_python [options]"
-                echo "Options:"
-                echo "  --force            Force rescan even if cached this month"
-                echo "  --show             Show all detected Python versions and paths"
-                echo "  --set-persistent   Add or update latest Python path in ~/.bashrc"
-                echo "  --remove-persistent Remove any Python PATH entry from ~/.bashrc"
-                echo "  --help             Show this help message"
+                cli_info "Usage: find_latest_python [options]"
+                cli_info "Options:"
+                cli_info "  --force            Force rescan even if cached this month"
+                cli_info "  --show             Show all detected Python versions and paths"
+                cli_info "  --set-persistent   Add or update latest Python path in ~/.bashrc"
+                cli_info "  --remove-persistent Remove any Python PATH entry from ~/.bashrc"
+                cli_info "  --help             Show this help message"
                 return 0
                 ;;
         esac
@@ -264,11 +290,11 @@ find_latest_python() {
 
     # Skip scan if same month and not forced
     if [ "$FORCE" = false ] && [ "$LAST_SCAN" == "$TODAY" ] && [ -n "$LAST_VERSION" ]; then
-        echo "ℹ Using cached Python version: $LAST_VERSION"
+        cli_info "Using cached Python version: $LAST_VERSION"
         export PATH="$(dirname "$LAST_PATH"):$PATH"
-        echo "Current Python: $(python --version)"
+        cli_success "Current Python: $(python --version)"
         if ! python -m pip --version &>/dev/null; then
-            echo "⚠ pip is not installed for this Python."
+            cli_error "pip is not installed for this Python."
         fi
         if [ "$PERSIST" = true ]; then
             _update_bashrc "$(dirname "$LAST_PATH")"
@@ -288,7 +314,7 @@ find_latest_python() {
     done
 
     if [ ${#PYTHON_PATHS[@]} -eq 0 ]; then
-        echo "⚠ No Python installation found."
+        cli_error "No Python installation found."
         return 1
     fi
 
@@ -301,9 +327,9 @@ find_latest_python() {
 
     # Show all versions if requested
     if [ "$SHOW" = true ]; then
-        echo "Detected Python installations:"
+        cli_info "Detected Python installations:"
         for v in $(printf "%s\n" "${!VERSION_MAP[@]}" | sort -V); do
-            echo "  $v -> ${VERSION_MAP[$v]}"
+            cli_info "  $v -> ${VERSION_MAP[$v]}"
         done
     fi
 
@@ -314,14 +340,14 @@ find_latest_python() {
 
     # Update PATH
     export PATH="$PYTHON_DIR:$PATH"
-    echo "✅ Added Python $LATEST_VERSION from $PYTHON_DIR to PATH."
-    echo "Current Python: $(python --version)"
+    cli_success "Added Python $LATEST_VERSION from $PYTHON_DIR to PATH."
+    cli_info "Current Python: $(python --version)"
 
     # Check pip
     if ! python -m pip --version &>/dev/null; then
-        echo "⚠ pip is not installed for this Python."
+        cli_error "pip is not installed for this Python."
     else
-        echo "✔ pip is available."
+        cli_info "pip is available."
     fi
 
     # Save metadata
@@ -339,34 +365,30 @@ EOF
 
 # Helper: Update ~/.bashrc with latest Python path
 _update_bashrc() {
-    echo ""
+    cli_blank " "
     local PYTHON_DIR="$1"
     local BASHRC="$HOME/.bashrc"
     if grep -q "export PATH=.*python" "$BASHRC"; then
         sed -i "s|export PATH=.*python.*|export PATH=\"$PYTHON_DIR:\$PATH\"|" "$BASHRC"
-        echo "✔ Updated Python path in $BASHRC"
+        cli_info "Updated Python path in $BASHRC"
     else
-        echo "export PATH=\"$PYTHON_DIR:\$PATH\"" >> "$BASHRC"
-        echo "✔ Added Python path to $BASHRC"
+        cli_info "export PATH=\"$PYTHON_DIR:\$PATH\"" >> "$BASHRC"
+        cli_info "Added Python path to $BASHRC"
     fi
 }
 
 # Helper: Remove Python PATH from ~/.bashrc
 _remove_bashrc() {
-    echo ""
+    cli_blank " "
     local BASHRC="$HOME/.bashrc"
     if grep -q "export PATH=.*python" "$BASHRC"; then
         sed -i "/export PATH=.*python.*/d" "$BASHRC"
-        echo "✔ Removed Python path from $BASHRC"
+        cli_info "Removed Python path from $BASHRC"
     else
-        echo "ℹ No Python path entry found in $BASHRC"
+        cli_error "No Python path entry found in $BASHRC"
     fi
 }
 
-
-echo " "
-echo "------------------------------------------------------------------------"
-echo " "
 
 # =====================================================================
 # Add tools and environments to PATH
@@ -390,7 +412,7 @@ add_to_path "/c/ProgramData/Laragon/bin/mqtt/emqx/bin"
 add_to_path "/c/ProgramData/Laragon/bin/utils"
 add_to_path "/c/ProgramData/Laragon/bin/mqtt/mosquitto"
 add_to_path "/c/ProgramData/Laragon/bin/marp"
-add_to_path "/c/ProgramData/Laragon/bin/nanomq/bin"
+add_to_path "/c/ProgramData/Laragon/bin/mqtt/nanomq/bin"
 
 
 # ---------------------------------------------------------------------
@@ -405,29 +427,30 @@ add_to_path /c/Laragon/bin/mqtt/emqx/bin
 add_to_path /c/Laragon/bin/utils
 add_to_path /c/Laragon/bin/mqtt/mosquitto
 add_to_path /c/Laragon/bin/marp
-add_to_path /c/Laragon/bin/nanomq/bin
+add_to_path /c/Laragon/bin/mqtt/nanomq/bin
 add_to_path "/c/Program\ Files/Erlang\ OTP/bin/"
+add_to_path "/C/laragon/bin/DbVisualizer"
+add_to_path "/C/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
+
 
 #
 # Any Windows PC
 add_to_path "/c/Program Files/7-Zip"
 
 
-echo " "
-echo "------------------------------------------------------------------------"
-echo " "
-
 # =====================================================================
+cli_blank " "
 find_latest_python
-
-echo " "
-echo "------------------------------------------------------------------------"
-echo " "
+cli_blank " "
 
 # =====================================================================
 # Source aliases if available
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases"
 
-echo " "
-echo "------------------------------------------------------------------------"
-echo " "
+
+# =====================================================================
+# End-of-initialization message (single line) and cleanup
+cli_blank " "
+cli_completed
+unset CLI_OUTPUT
+unset __cli_out
