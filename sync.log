@@ -1,0 +1,11 @@
+[WARN] Checksum file missing. Creating...
+[INFO] Updating checksum file in repo...
+[INFO] Verifying checksum file...
+[OK] Checksum file is up-to-date.
+[WARN] .aliases missing in /c/Users/goulda
+[OK] Copied .aliases
+[OK] .aliases is identical in /c/users/goulda
+[WARN] .bashrc missing in /c/Users/goulda
+[OK] Copied .bashrc
+[OK] .bashrc is identical in /c/users/goulda
+[OK] Operation completed.

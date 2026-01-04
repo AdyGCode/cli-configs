@@ -1,0 +1,2 @@
+5e5d03ebc2742b6efd17f9bf135641dd5c94fda1505446f9edebf8a2dd420dc9 */c/Users/goulda/Source/Repos/cli-configs/.aliases
+65d79da428f890adb538244fe8343b23f3086aa191891b87880d2be2bf46c13e */c/Users/goulda/Source/Repos/cli-configs/.bashrc

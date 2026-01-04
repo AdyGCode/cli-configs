@@ -1,4 +1,4 @@
-export CLI_OUTPUT=none
+export CLI_OUTPUT=SUCCESS
 
 # =====================================================================
 # Output filtering via $CLI_OUTPUT (case-insensitive)
@@ -86,7 +86,7 @@ cli_warning()  { cli_enabled warning && printf '⚠️ %b\n' "$*" >&2; }
 cli_error()    { cli_enabled error   && printf '🛑 %b\n' "$*" >&2; }
 cli_info()     { cli_enabled info    && printf 'ℹ️  %b\n' "$*"; }
 cli_blank()    { printf '%b\n' "$*"; }
-cli_completed(){ printf '%s\n' "BashRC executed and Aliases added"; }  # single final line
+cli_completed(){ printf '🧐 %s\n' "BashRC executed and Aliases added"; }  # single final line
 
 
 # =====================================================================
@@ -473,10 +473,10 @@ add_to_path /c/Laragon/bin/pie
 add_to_path /c/Laragon/bin/mongodb/mongodb-8.0.8/bin
 add_to_path /c/Laragon/bin/mongodb/mongodb-shell
 add_to_path /c/Laragon/usr/bin
-add_to_path /c/Laragon/bin/mqtt/emqx/bin
 add_to_path /c/Laragon/bin/utils
-add_to_path /c/Laragon/bin/mqtt/mosquitto
 add_to_path /c/Laragon/bin/marp
+add_to_path /c/Laragon/bin/mqtt/emqx/bin
+add_to_path /c/Laragon/bin/mqtt/mosquitto
 add_to_path /c/Laragon/bin/mqtt/nanomq/bin
 add_to_path "/c/Program\ Files/Erlang\ OTP/bin/"
 add_to_path "/C/laragon/bin/DbVisualizer"
