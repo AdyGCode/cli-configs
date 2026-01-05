@@ -94,17 +94,13 @@ cli_info()     { cli_enabled info    && printf 'ℹ️  %b\n' "$*"; }
 cli_blank()    { printf '%b\n' "$*"; }
 cli_completed(){ printf '🧐 %s\n' "BashRC executed and Aliases added"; }  # single final line
 
-
-# =====================================================================
-# Add JRE location as environment variable
-export EXE4J_JAVA_HOME="/c/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
-
-
-# =====================================================================
-# Required basic aliases. Others added tot he .aliases file
-add_alias la 'ls -ah'
-add_alias ll 'ls -lah'
-add_alias ls 'ls -F --color=auto --show-control-chars'
+# Force-print helpers (ignore CLI_OUTPUT filter)
+# Primary use: --help / -h
+cli_success_f() { printf '✅ %b\n' "$*"; }
+cli_warning_f() { printf '⚠️ %b\n' "$*" >&2; }
+cli_error_f()   { printf '🛑 %b\n' "$*" >&2; }
+cli_info_f()    { printf 'ℹ️  %b\n' "$*"; }
+cli_blank_f()   { printf '%b\n' "$*"; }
 
 
 # =====================================================================
@@ -126,17 +122,17 @@ add_to_path() {
   done
 
   if [ "$show_help" -eq 1 ] || [ -z "$path" ]; then
-    cli_info "Usage: add_to_path [--force] <path>"
-    cli_info " "
-    cli_info "Adds <path> to the PATH environment variable."
-    cli_info " "
-    cli_info "Options:"
-    cli_info "  --force  Add the path even if it does not exist."
-    cli_info "  --help, -h  Show this help message."
-    cli_info " "
-    cli_info "Examples:"
-    cli_info "  add_to_path ./vendor/bin"
-    cli_info "  add_to_path --force ./vendor/bin"
+    cli_info_f "Usage: add_to_path [--force] <path>"
+    cli_blank_f " "
+    cli_info_f "Adds <path> to the PATH environment variable."
+    cli_blank_f " "
+    cli_info_f "Options:"
+    cli_info_f "  --force  Add the path even if it does not exist."
+    cli_info_f "  --help, -h  Show this help message."
+    cli_blank_f " "
+    cli_info_f "Examples:"
+    cli_info_f "  add_to_path ./vendor/bin"
+    cli_info_f "  add_to_path --force ./vendor/bin"
     return 0
   fi
 
@@ -165,16 +161,16 @@ add_to_path() {
 add_alias() {
   # Help option
   if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    cli_info "Usage: add_alias [--force|-f] <alias_name> <alias_command>"
-    cli_info " "
-    cli_info "Options:"
-    cli_info "  --force, -f  Force creation of alias even if command or path is invalid"
-    cli_info "  --help, -h   Show this help message"
-    cli_info " "
-    cli_info "Examples:"
-    cli_info "  add_alias cls 'clear'"
-    cli_info "  add_alias laragon 'cd /c/ProgramData/Laragon/'"
-    cli_info "  add_alias --force emqx-start 'cd /c/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'"
+    cli_info_f "Usage: add_alias [--force|-f] <alias_name> <alias_command>"
+    cli_blank_f " "
+    cli_info_f "Options:"
+    cli_info_f "  --force, -f  Force creation of alias even if command or path is invalid"
+    cli_info_f "  --help, -h   Show this help message"
+    cli_blank_f " "
+    cli_info_f "Examples:"
+    cli_info_f "  add_alias cls 'clear'"
+    cli_info_f "  add_alias laragon 'cd /c/ProgramData/Laragon/'"
+    cli_info_f "  add_alias --force emqx-start 'cd /c/Laragon/bin/mqtt/emqx/bin && ./emqx foreground'"
     return 0
   fi
 
@@ -237,57 +233,195 @@ add_alias() {
 }
 
 
-# ---------------------------------------------------------------------
-# Display paths in a folder as a tree
 
+# =====================================================================
+# Show a folder tree (default: current directory).
+# Options:
+#   --dir <path>       Render the given directory (absolute or relative)
+#   --path             Render PATH entries as a component tree (legacy mode)
+#   --show-hidden      Include dotfiles/hidden items (names beginning with '.')
+#   --max-depth=N      Limit depth (directory mode only; 0/omit = unlimited)
+#   --delimiter=CHAR   Separator used in --path mode (default: ':')
+#   --help, -h         Show detailed help and exit
+#
+# Examples:
+#   pathtree                               # current dir
+#   pathtree --dir /c/Laragon/bin          # specific dir
+#   pathtree --dir . --show-hidden         # current dir, include hidden
+#   pathtree --dir /c/Projects --max-depth=2
+#   pathtree --path                         # PATH as component tree (normalized)
+#   pathtree --path --delimiter=';'         # if PATH uses ';' as separator
 pathtree() {
-  cli_blank " "
-  local delimiter=":"
+  local mode="dir"               # dir | path
+  local target="$PWD"
   local show_hidden=false
+  local max_depth=0              # 0 = unlimited
+  local delimiter=":"            # used only in --path mode
+  local target_given=0
 
   # Parse options
-  while [[ $# -gt 0 ]]; do
+  while [ $# -gt 0 ]; do
     case "$1" in
-      --show-hidden) show_hidden=true ;;
-      --delimiter=*) delimiter="${1#*=}" ;;
-      *) cli_info "Usage: pathtree [--show-hidden] [--delimiter=CHAR]"; return 1 ;;
+      --dir)
+        shift
+        target="${1:-$PWD}"
+        target_given=1
+        ;;
+      --path)
+        mode="path"
+        ;;
+      --show-hidden)
+        show_hidden=true
+        ;;
+      --max-depth=*)
+        max_depth="${1#*=}"
+        ;;
+      --delimiter=*)
+        delimiter="${1#*=}"
+        ;;
+      --help|-h)
+        # Extended help text
+        cli_blank_f " "
+        cli_info_f "Usage: pathtree [OPTIONS] [<path>]"
+        cli_blank_f " "
+        cli_info_f "Description:"
+        cli_info_f "  Render a simple ASCII tree. By default, pathtree prints the tree of"
+        cli_info_f "  the current working directory. You can also render a specific directory"
+        cli_info_f "  or visualize your PATH as a component tree (legacy mode)."
+        cli_blank_f " "
+        cli_info_f "Options:"
+        cli_info_f "  --dir <path>       Render the given directory (absolute or relative)."
+        cli_info_f "                     If a bare path (without --dir) is supplied and is a"
+        cli_info_f "                     valid directory, it is treated as --dir <path>."
+        cli_info_f "  --path             Render PATH entries as a hierarchical component tree."
+        cli_info_f "                     Useful to inspect how PATH is composed; drive letters"
+        cli_info_f "                     like /C/... are normalized to /c/... to avoid duplicates."
+        cli_info_f "  --show-hidden      Include hidden files/directories (names beginning with '.')."
+        cli_info_f "                     Default behavior prunes hidden directories for readability."
+        cli_info_f "  --max-depth=N      Limit the depth in directory mode to N levels."
+        cli_info_f "                     Defaults to unlimited (0 or omitted)."
+        cli_info_f "  --delimiter=CHAR   Character that separates PATH entries in --path mode."
+        cli_info_f "                     Default is ':'. On Windows shells, you may prefer ';'."
+        cli_info_f "  --help, -h         Show this help and exit."
+        cli_blank_f " "
+        cli_info_f "Behavior & Notes:"
+        cli_info_f "  • Default mode is directory mode, using \$PWD."
+        cli_info_f "  • PATH mode does not walk the filesystem; it splits PATH and displays"
+        cli_info_f "    the segments as nested components for a quick visual overview."
+        cli_info_f "  • Hidden entries are pruned unless --show-hidden is given."
+        cli_info_f "  • On mixed-case Windows paths, drive letters are normalized (e.g., /C → /c)."
+        cli_info_f "  • Output respects CLI_OUTPUT filters (success|warning|error|info|none|all)."
+        cli_info_f "    Help text uses 'info' and 'blank' lines."
+        cli_blank_f " "
+        cli_info_f "Examples:"
+        cli_info_f "  pathtree"
+        cli_info_f "    Show the tree of the current directory."
+        cli_info_f "  pathtree --dir /c/Laragon/bin"
+        cli_info_f "    Show the tree of a specific directory."
+        cli_info_f "  pathtree --dir . --show-hidden --max-depth=2"
+        cli_info_f "    Show current directory, include dotfiles, limit to 2 levels."
+        cli_info_f "  pathtree --path"
+        cli_info_f "    Visualize PATH entries as a normalized component tree."
+        cli_info_f "  pathtree --path --delimiter=';'"
+        cli_info_f "    Use ';' as the PATH entry separator."
+        cli_blank_f " "
+        return 0
+        ;;
+      *)
+        # If a bare path is given without --dir, treat it as target
+        if [ "$target_given" -eq 0 ] && [ -d "$1" ]; then
+          target="$1"
+          target_given=1
+        else
+          cli_warning "Unknown option or non-directory: $1"
+        fi
+        ;;
     esac
     shift
   done
 
-  IFS="$delimiter" read -ra paths <<< "$PATH"
+  if [ "$mode" = "path" ]; then
+    # ---- PATH MODE (legacy) ---------------------------------------------------
+    local tree=()
+    local IFS="$delimiter"
+    # shellcheck disable=SC2206
+    local paths=($PATH)
+    IFS=" "
 
-  # Build tree as a list of paths
-  local tree=()
-  for path in "${paths[@]}"; do
-    IFS='/' read -ra parts <<< "$path"
-    local current=""
-    for part in "${parts[@]}"; do
-      [[ -z "$part" ]] && continue
-      [[ "$show_hidden" = false && "$part" == .* ]] && continue
-      current="$current/$part"
-      tree+=("$current")
+    for p in "${paths[@]}"; do
+      # normalize Windows drive letters: /C/... -> /c/...
+      p="$(printf '%s' "$p" | sed -E 's|^/([A-Z])|/\L\1|')"
+      IFS='/' read -r -a parts <<< "$p"
+      local current=""
+      for part in "${parts[@]}"; do
+        [ -z "$part" ] && continue
+        if [ "$show_hidden" = false ] && printf '%s' "$part" | grep -qE '^\.'; then
+          continue
+        fi
+        current="$current/$part"
+        tree+=("$current")
+      done
+      IFS=" "
     done
-  done
 
-  # Remove duplicates
-  local unique_tree=()
-  for item in "${tree[@]}"; do
-    local found=false
-    for existing in "${unique_tree[@]}"; do
-      [[ "$item" == "$existing" ]] && found=true && break
-    done
-    [[ "$found" == false ]] && unique_tree+=("$item")
-  done
+    if [ ${#tree[@]} -eq 0 ]; then
+      cli_info "PATH appears empty."
+      return 0
+    fi
+    # de-duplicate + sort
+    printf "%s\n" "${tree[@]}" | awk '!seen[$0]++' | sort |
+    awk -F'/' '
+      {
+        depth=NF-1; name=$NF; indent="";
+        for (i=1; i<depth; i++) indent=indent "    |";
+        printf("|%s +-- %s\n", indent, name);
+      }
+    '
+    return 0
+  fi
 
-  # Print tree
-  for path in "${unique_tree[@]}"; do
+  # ---- DIRECTORY MODE (default) ----------------------------------------------
+  if [ ! -d "$target" ]; then
+    cli_error "Directory not found: $target"
+    return 1
+  fi
+
+  local find_opts=()
+  find_opts+=("$target")
+  find_opts+=(-type d)
+  if [ "$show_hidden" = false ]; then
+    # prune hidden dirs
+    find_opts+=("(" -name ".*" -prune ")" -o -type d -print)
+  else
+    find_opts+=(-print)
+  fi
+  if [ "$max_depth" -gt 0 ] 2>/dev/null; then
+    find_opts+=(-maxdepth "$max_depth")
+  fi
+
+  # shellcheck disable=SC2207
+  local dirs=($(find "${find_opts[@]}" 2>/dev/null | sed -E 's|^/([A-Z])|/\L\1|' | sort))
+
+  if [ ${#dirs[@]} -eq 0 ]; then
+    cli_info "(empty)"
+    return 0
+  fi
+
+  local base_parts
+  IFS='/' read -r -a base_parts <<< "$target"
+  local base_depth=${#base_parts[@]}
+  IFS=" "
+  for d in "${dirs[@]}"; do
+    IFS='/' read -r -a parts <<< "$d"
+    local depth=$(( ${#parts[@]} - base_depth ))
+    [ "$depth" -lt 0 ] && depth=0
+    local name="${parts[-1]}"
     local indent=""
-    IFS='/' read -ra parts <<< "$path"
-    for ((i = 1; i < ${#parts[@]}; i++)); do
-      indent+="|   "
+    for ((i=0; i<depth; i++)); do
+      indent="$indent|   "
     done
-    cli_blank "${indent}+-- ${parts[-1]}"
+    printf "%s+-- %s\n" "$indent" "$name"
+    IFS=" "
   done
 }
 
@@ -315,13 +449,14 @@ find_latest_python() {
             --set-persistent) PERSIST=true ;;
             --remove-persistent) REMOVE=true ;;
             --help)
-                cli_info "Usage: find_latest_python [options]"
-                cli_info "Options:"
-                cli_info "  --force            Force rescan even if cached this month"
-                cli_info "  --show             Show all detected Python versions and paths"
-                cli_info "  --set-persistent   Add or update latest Python path in ~/.bashrc"
-                cli_info "  --remove-persistent Remove any Python PATH entry from ~/.bashrc"
-                cli_info "  --help             Show this help message"
+                cli_info_f "Usage: find_latest_python [options]"
+                cli_blank_f " "
+                cli_info_f "Options:"
+                cli_info_f "  --force            Force rescan even if cached this month"
+                cli_info_f "  --show             Show all detected Python versions and paths"
+                cli_info_f "  --set-persistent   Add or update latest Python path in ~/.bashrc"
+                cli_info_f "  --remove-persistent Remove any Python PATH entry from ~/.bashrc"
+                cli_info_f "  --help             Show this help message"
                 return 0
                 ;;
         esac
@@ -447,6 +582,19 @@ _remove_bashrc() {
 
 
 # =====================================================================
+# Add JRE location as environment variable
+export EXE4J_JAVA_HOME="/c/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
+
+
+# =====================================================================
+# Required basic aliases. Others added tot he .aliases file
+add_alias la 'ls -ah'
+add_alias ll 'ls -lah'
+add_alias ls 'ls -F --color=auto --show-control-chars'
+
+
+
+# =====================================================================
 # Add tools and environments to PATH
 
 # ---------------------------------------------------------------------
@@ -493,15 +641,17 @@ add_to_path "/C/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
 # Any Windows PC
 add_to_path "/c/Program Files/7-Zip"
 
-
-# =====================================================================
-cli_info " "
-find_latest_python
-cli_info " "
-
 # =====================================================================
 # Source aliases if available
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases"
+
+
+
+# =====================================================================
+cli_blank_f " "
+find_latest_python
+cli_blank_f " "
+
 
 
 # =====================================================================
@@ -531,4 +681,4 @@ cli_blank "Today's date is: $(date +"%A, %d-%m-%Y")"
 cli_blank " "
 
 unset CLI_OUTPUT
-unset __cli_out
+unset __cli_out_raw __cli_out_norm __cli_tokens __cli_preset __cli_allow_list
