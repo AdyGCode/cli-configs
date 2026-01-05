@@ -19,7 +19,7 @@ __cli_out_norm="$(printf '%s' "$__cli_out_raw" | tr '[:upper:]' '[:lower:]')"
 # Shell-safe tokenizer: translate separators to spaces, then read into array.
 __cli_tokens=()
 if [ -n "$__cli_out_norm" ]; then
-  __cli_out_seps="$(printf '%s' "$__cli_out_norm" | tr ',|' '  ' )"
+  __cli_out_seps="$(printf '%s' "$__cli_out_norm" | tr ',|' '  ')"
   # trim extra spaces
   # shellcheck disable=SC2086
   set -- $__cli_out_seps
@@ -28,7 +28,8 @@ if [ -n "$__cli_out_norm" ]; then
   done
 fi
 
-# Resolve preset logic:
+# Resolve preset: default ALL unless explicitly NONE or ALL provided,
+# but if specific categories are given, switch to CUSTOM.
 __cli_preset="all"
 for t in "${__cli_tokens[@]}"; do
   case "$t" in
@@ -58,9 +59,13 @@ else
     esac
   done
 
-  if [ "$__has_specific" -eq 0 ]; then
-    # No specific categories found → ALL
+  if [ "$__has_specific" -eq 1 ]; then
+    # Specific categories provided → CUSTOM preset
+    __cli_preset="custom"
+  else
+    # No specific categories → ALL categories allowed
     __cli_allow_list=" success warning error info "
+    __cli_preset="all"
   fi
 fi
 
@@ -68,14 +73,15 @@ fi
 cli_enabled() {
   # $1: category name (success|warning|error|info)
   case "$__cli_preset" in
-    none) return 1 ;;       # nothing allowed
-    all)  return 0 ;;       # everything allowed
-    *)
+    none)   return 1 ;;  # nothing allowed
+    all)    return 0 ;;  # everything allowed
+    custom)
       case "$__cli_allow_list" in
         *" $1 "* ) return 0 ;;
-        * ) return 1 ;;
+        * )        return 1 ;;
       esac
       ;;
+    *) return 0 ;;       # safety: treat unknown as ALL
   esac
 }
 
@@ -96,9 +102,9 @@ export EXE4J_JAVA_HOME="/c/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
 
 # =====================================================================
 # Required basic aliases. Others added tot he .aliases file
-alias la='ls -ah'
-alias ll='ls -lah'
-alias ls='ls -F --color=auto --show-control-chars'
+add_alias la 'ls -ah'
+add_alias ll 'ls -lah'
+add_alias ls 'ls -F --color=auto --show-control-chars'
 
 
 # =====================================================================

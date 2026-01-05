@@ -1,2 +1,2 @@
-5e5d03ebc2742b6efd17f9bf135641dd5c94fda1505446f9edebf8a2dd420dc9 */c/Users/goulda/Source/Repos/cli-configs/.aliases
-65d79da428f890adb538244fe8343b23f3086aa191891b87880d2be2bf46c13e */c/Users/goulda/Source/Repos/cli-configs/.bashrc
+b2cee2d78454412a25fd3ab82b5da1461f258062409212b883aa0536a86340cf */c/Users/goulda/Source/Repos/cli-configs/.aliases
+eeeabe1f3e9f98467df474ece20e198e44f0e3f6558d42606e05b8aab3dade0e */c/Users/goulda/Source/Repos/cli-configs/.bashrc

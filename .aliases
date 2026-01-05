@@ -62,6 +62,7 @@ add_alias --force makeapi 'artisan make:model -acs --api'
 add_alias --force pest './vendor/bin/pest'
 add_alias --force pint './vendor/bin/pint'
 add_alias --force test 'artisan test'
+add_alias --force clear-all 'artisan view:clear && artisan route:clear && artisan event:clear && artisan optimize:clear && artisan config:clear && artisan cache:clear && artisan auth:clear-resets'
 
 # ---------------------------------------------------------------------
 # Python Utilities
