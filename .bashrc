@@ -1,4 +1,4 @@
-export CLI_OUTPUT=SUCCESS
+export CLI_OUTPUT=NONE
 
 # =====================================================================
 # Output filtering via $CLI_OUTPUT (case-insensitive)
@@ -99,7 +99,7 @@ cli_completed(){ printf '🧐 %s\n' "BashRC executed and Aliases added"; }  # si
 cli_success_f() { printf '✅ %b\n' "$*"; }
 cli_warning_f() { printf '⚠️ %b\n' "$*" >&2; }
 cli_error_f()   { printf '🛑 %b\n' "$*" >&2; }
-cli_info_f()    { printf 'ℹ️  %b\n' "$*"; }
+cli_info_f()    { printf 'ℹ️ %b\n' "$*"; }
 cli_blank_f()   { printf '%b\n' "$*"; }
 
 
@@ -481,9 +481,9 @@ find_latest_python() {
 
     # Skip scan if same month and not forced
     if [ "$FORCE" = false ] && [ "$LAST_SCAN" == "$TODAY" ] && [ -n "$LAST_VERSION" ]; then
-        cli_info "Using cached Python version: $LAST_VERSION"
+        cli_info_f "Using cached Python version: $LAST_VERSION"
         export PATH="$(dirname "$LAST_PATH"):$PATH"
-        cli_success "Current Python: $(python --version)"
+        cli_success_f "Current Python: $(python --version)"
         if ! python -m pip --version &>/dev/null; then
             cli_error "pip is not installed for this Python."
         fi
@@ -505,7 +505,7 @@ find_latest_python() {
     done
 
     if [ ${#PYTHON_PATHS[@]} -eq 0 ]; then
-        cli_error "No Python installation found."
+        cli_error_f "No Python installation found."
         return 1
     fi
 
@@ -518,9 +518,9 @@ find_latest_python() {
 
     # Show all versions if requested
     if [ "$SHOW" = true ]; then
-        cli_info "Detected Python installations:"
+        cli_info_f "Detected Python installations:"
         for v in $(printf "%s\n" "${!VERSION_MAP[@]}" | sort -V); do
-            cli_info "  $v -> ${VERSION_MAP[$v]}"
+            cli_info_f "  $v -> ${VERSION_MAP[$v]}"
         done
     fi
 
