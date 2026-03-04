@@ -1,9 +1,9 @@
 [INFO] Verifying checksum file...
 [OK] Checksum file is up-to-date.
-[OK] .aliases is identical in /c/Users/goulda
-[OK] .aliases is identical in /c/users/goulda
-[WARN] .bashrc differs in /c/Users/goulda
-[INFO] Backup created: /c/Users/goulda/.bashrc.bak
-[OK] Updated /c/Users/goulda/.bashrc
-[OK] .bashrc is identical in /c/users/goulda
+[OK] .aliases is identical in /c/Users/5001775
+[OK] .aliases is identical in /c/users/5001775
+[WARN] .bashrc differs in /c/Users/5001775
+[INFO] Backup created: /c/Users/5001775/.bashrc.bak
+[OK] Updated /c/Users/5001775/.bashrc
+[OK] .bashrc is identical in /c/users/5001775
 [OK] Operation completed.

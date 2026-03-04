@@ -427,6 +427,40 @@ pathtree() {
 
 
 # ---------------------------------------------------------------------
+# Convert MSYS/Git Bash path to Windows path for cmd.exe
+_to_win_path() {
+  # Prefer cygpath if available; otherwise do a simple transform
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    # /c/Program Files/Python311/python.exe -> C:\Program Files\Python311\python.exe
+    printf '%s' "$1" | sed -E 's,^/([a-zA-Z])/,\\U\1:\\,; s,/,\\,g'
+  fi
+}
+
+
+# ---------------------------------------------------------------------
+_probe_python_version() {
+  local exe="$1"
+  local line version
+
+  # Try direct (works in your output)
+  line=$("$exe" --version 2>&1 | tr -d '\r' | head -n 1) || line=""
+  if [[ ! "$line" =~ ^Python[[:space:]] ]]; then
+    # Convert path for cmd.exe and then quote it
+    local win_exe=$(_to_win_path "$exe")
+    line=$(cmd.exe /c "\"$win_exe\" --version" 2>&1 | tr -d '\r' | head -n 1) || line=""
+  fi
+
+  if [[ "$line" =~ ^Python[[:space:]]+([0-9][0-9.]+) ]]; then
+    version="${BASH_REMATCH[1]}"
+    printf '%s' "$version"
+    return 0
+  fi
+  return 1
+}
+
+# ---------------------------------------------------------------------
 # Locate latest version of Python and add to path
 
 find_latest_python() {
@@ -511,10 +545,27 @@ find_latest_python() {
 
     # Map versions to paths
     declare -A VERSION_MAP
+
     for path in "${PYTHON_PATHS[@]}"; do
-        local version=$("$path" --version 2>&1 | awk '{print $2}')
+      # Try to get a version string robustly
+      version=$(_probe_python_version "$path") || version=""
+      if [[ -n "$version" ]]; then
         VERSION_MAP["$version"]="$path"
+        if [ "$SHOW" = true ]; then
+          cli_info_f "  ✔ $version -> $path"
+        fi
+      else
+        if [ "$SHOW" = true ]; then
+          cli_warning_f "  ✖ unable to read version -> $path"
+        fi
+        continue
+      fi
     done
+
+    if [[ ${#VERSION_MAP[@]} -eq 0 ]]; then
+      cli_error_f "Found python.exe candidates, but could not read any version strings."
+      return 1
+    fi
 
     # Show all versions if requested
     if [ "$SHOW" = true ]; then
